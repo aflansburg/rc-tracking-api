@@ -4,19 +4,22 @@ const mongoose = require('mongoose');
 const Tracking = mongoose.model('Tracking');
 
 exports.retrieve_tracking = function(req, res){
+    console.log('Request made to retrieve tracking.');
     Tracking.find({}, (err, tracking)=>{
         if (err)
             res.send(err);
         res.json(tracking);
+        console.log('response returned');
     });
 }
 
 exports.create_tracking = function(req, res){
-    const new_tracking = new Tracking(req.body);
+    // need to put in some logic to handle duplicates either here or when getting the tracking numbers from the source
+    const new_tracking = new Tracking(req);
     new_tracking.save((err, tracking)=>{
         if(err)
             res.send(err);
-        res.json(tracking);
+        // res.json(tracking);
     });
 }
 

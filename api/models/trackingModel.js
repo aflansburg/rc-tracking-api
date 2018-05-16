@@ -2,21 +2,21 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const TrackingSchema = new Schema({
-    name: {
+    trackingNum: {
         type: String,
-        required: 'Enter a name for this tracking',
     },
-    Created_date: {
-        type: Date,
-        default: Date.now,
+    shipDate: {
+        type: String,
     },
-    status: {
-        type:  [{
-            type: String,
-            enum: ['pending', 'ongoing', 'completed'],
-        }],
-        default: ['pending'],
-    }   
+    lastStatus: {
+        type:  String,
+    }  ,
+    lastStatusDate: {
+        type: String,
+    },
+    lastLocation: {
+        type: Object,
+    },
 });
 
 module.exports = mongoose.model('Tracking', TrackingSchema);

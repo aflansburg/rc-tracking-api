@@ -22,7 +22,6 @@ const chunkArray = (arr, chunk_size) => {
 }
 
 const makeRequestPromise = (req) => {
-    console.log(req);
     return new Promise((resolve, reject) =>{
         soap.createClientAsync(wsdl , {namespaceArrayElements: true})
             .then((client) => {
@@ -35,7 +34,7 @@ const makeRequestPromise = (req) => {
                 const results = result[0].CompletedTrackDetails;
                 const trckData = (results ? results.map(t=>{
                     return {
-                        trackingNo: t.TrackDetails[0].TrackingNumber,
+                        trackingNum: t.TrackDetails[0].TrackingNumber,
                         ...(t.TrackDetails[0].StatusDetail
                             ? {
                                 lastStatus: t.TrackDetails[0].StatusDetail.Description,
@@ -110,7 +109,7 @@ async function fedexBatchTrack(trackingNumbers){
                     Value: trckNo,
                 }
             }});
-            
+
         const request = {
             WebAuthenticationDetail: {
                 UserCredential: {
