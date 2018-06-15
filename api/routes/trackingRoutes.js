@@ -8,6 +8,6 @@ module.exports = function(app) {
 
     app.route('/tracking/:trackingId')
         .get(tracking.read_tracking)
-        .put(tracking.update_tracking)
+        .put(tracking.update_many)
         .delete(tracking.delete_tracking);
 };
