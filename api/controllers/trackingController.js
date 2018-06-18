@@ -12,6 +12,7 @@ exports.retrieve_tracking = function(req, res){
 }
 
 exports.create_tracking = function(req, res){
+        console.log('Writing new tracking information.');
         const new_tracking = new Tracking(req);
         new_tracking.save((err, tracking)=>{
             console.log('tracking written to db');

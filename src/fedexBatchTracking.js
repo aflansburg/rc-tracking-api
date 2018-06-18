@@ -8,14 +8,17 @@ const wsdl = "https://s3-us-west-2.amazonaws.com/abeapps/TrackService_v14.wsdl";
 const credentials = require('./data/credentials.json');
 const pd = require('pretty-data').pd;
 
-const limiter = new Bottleneck({minTime: 555});
+const limiter = new Bottleneck({minTime: 1500});
+limiter.on('debug', function (message, data) {
+    console.log(message);
+})
 
 const auth = {
-    key: credentials.webSvcSandbox.key,
-    password: credentials.webSvcSandbox.secret,
-    accountNum: credentials.webSvcSandbox.acctNum,
-    meterNum: credentials.webSvcSandbox.meterNum,
-    testUrl: credentials.webSvcSandbox.url,
+    key: credentials.webSvcProduction.key,
+    password: credentials.webSvcProduction.secret,
+    accountNum: credentials.webSvcProduction.acctNum,
+    meterNum: credentials.webSvcProduction.meterNum,
+    testUrl: credentials.webSvcProduction.url,
 }
 
 const chunkArray = (arr, chunk_size) => {
@@ -28,39 +31,73 @@ const chunkArray = (arr, chunk_size) => {
 
 // need to throttle each of these
 const makeRequestPromise = (req) => {
-        return new Promise((resolve, reject) =>{
-            // createClientAsync was not playing well with the number of requests
-            soap.createClient(wsdl, {namespaceArrayElements: true}, (err, client)=>{
-                client.track(req, (err, result)=>{
-                    const results = result.CompletedTrackDetails;
-                    // GET THE REASON CODE
-                    const trckData = (results ? results.map(t=>{
-                        let shipDate = null;
-                        t.TrackDetails[0].DatesOrTimes && t.TrackDetails[0].DatesOrTimes.forEach(d=>{
-                            if (d.Type === "SHIP")
-                                shipDate = d.DateOrTimestamp;
-                        });
-                        return {
-                            trackingNum: t.TrackDetails[0].TrackingNumber,
-                            ...(t.TrackDetails && t.TrackDetails[0].StatusDetail
-                                ? {
-                                    lastStatus: t.TrackDetails[0].StatusDetail.Description,
-                                    lastStatusDate: t.TrackDetails[0].StatusDetail.CreationTime,
-                                    lastLocation: t.TrackDetails[0].StatusDetail.Location,
-                                    shipDate: shipDate,
-                                    reason: t.TrackDetails[0].StatusDetail.AncillaryDetails
-                                            ? t.TrackDetails[0].StatusDetail.AncillaryDetails[0].ReasonDescription
-                                            : 'No exception or no reason data',
+        return limiter.schedule(()=>{
+            return new Promise((resolve, reject) =>{
+                // createClientAsync was not playing well with the number of requests
+                try {
+                    soap.createClient(wsdl, {namespaceArrayElements: true}, (err, client)=>{
+                        try {
+                            client.track(req, (err, result)=>{
+                                let attempts = 0;
+                                const maxAttempts = 3;   
+                                let retry = true;
+                                while(retry){
+                                    try {
+                                        // console.log(JSON.stringify(result));
+                                        let results = result.CompletedTrackDetails;
+                                        // this is a crutch, but with Fedex Prod there shouldn't be null or undefined
+                                        // better validation methods needed
+                                        results = results.filter(r=> r !== null);
+                                        results = results.filter(r=> r !== undefined);
+                                        let trckData = (results ? results.map(t=>{
+                                            let shipDate = null;
+                                            t.TrackDetails[0].DatesOrTimes && t.TrackDetails[0].DatesOrTimes.forEach(d=>{
+                                                if (d.Type === "SHIP")
+                                                    shipDate = d.DateOrTimestamp;
+                                            });
+                                            return {
+                                                trackingNum: t.TrackDetails[0].TrackingNumber,
+                                                ...(t.TrackDetails && t.TrackDetails[0].StatusDetail
+                                                    ? {
+                                                        lastStatus: t.TrackDetails[0].StatusDetail.Description,
+                                                        lastStatusDate: t.TrackDetails[0].StatusDetail.CreationTime,
+                                                        lastLocation: t.TrackDetails[0].StatusDetail.Location,
+                                                        shipDate: shipDate,
+                                                        reason: t.TrackDetails[0].StatusDetail.AncillaryDetails
+                                                                ? t.TrackDetails[0].StatusDetail.AncillaryDetails[0].ReasonDescription
+                                                                : 'No exception or no reason data',
+                                                    }
+                                                    : {status: 'No status'})
+                                            }
+                                        }) : null);
+                                        trckData = trckData.filter(td=> td !== undefined);
+                                        retry = false;
+                                        trckData
+                                            ? resolve(trckData)
+                                            : reject(trckData) // <-- this needs to be fixed
+                                    }
+                                    catch(e) {
+                                        if (++attempts === maxAttempts)
+                                            console.log('There was an error parsing the response from FedEx.\n' + e);                                    
+                                    }
                                 }
-                                : {status: 'No status'})
+                                
+                            })
                         }
-                    }) : null);
-                    trckData
-                        ? resolve(trckData)
-                        : reject(trckData)
-                })
-            })
-        });
+                        catch (err){
+                            console.log(`Error making request to Fedex SOAP API:\n${err}`)
+                        }
+                        
+                    })
+                }
+                catch (e){
+                    console.log(`Error creating SOAP Client:\n\t Error Details: ${e}`)
+                }
+            });
+        })
+        .then((trackingData)=> {
+            return trackingData;
+        })
 }
 
 async function fedexBatchTrack(trackingNumbers){
@@ -69,7 +106,6 @@ async function fedexBatchTrack(trackingNumbers){
     const tracking = trackingNumbers.length > 30 
                     ? chunkArray(trackingNumbers, 30)
                     : trackingNumbers;
-
     let promiseArray = [];
 
     if (Array.isArray(tracking[1])){
@@ -137,7 +173,6 @@ async function fedexBatchTrack(trackingNumbers){
         }
         promiseArray.push(makeRequestPromise(request));
     }
-
     return await Promise.all(promiseArray);
 }
 

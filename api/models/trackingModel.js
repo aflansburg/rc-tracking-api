@@ -7,6 +7,9 @@ const TrackingSchema = new Schema({
         type: String,
         index: { unique: true }
     },
+    orderNum: {
+        type: String,
+    },
     shipDate: {
         type: Date,
     },

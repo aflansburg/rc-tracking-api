@@ -12,18 +12,6 @@ const config = {
 const sqlQuery = 'SELECT  [U_PackTracking],[DocDate],[SalesOrderNum],[PackageNum]FROM [RC_Live_build].[dbo].[TrackingNumberStatus]WHERE [DocDate] >= DATEADD(day, -3, GETDATE())';
 
 async function getShipmentData () {
-    // try {
-    //     const pool = await sql.connect(config);
-    //     const result = await pool.request()
-    //         .query(sqlQuery);
-    //     // this is a bug of tediousjs - must explicitly call pool.close()
-    //     pool.close();
-    //     return result.recordset;
-    // }
-    // catch (err){
-    //     console.log(`Error:\n\t${err}`);
-
-    // }
     const pool = new sql.ConnectionPool(config);
     pool.on('error', err => {
         // ... error handler 

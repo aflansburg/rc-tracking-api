@@ -6,7 +6,11 @@ const Tracking = require('./api/models/trackingModel');
 const OrderShipment = require('./api/models/orderShipmentModel');
 const bodyParser = require('body-parser');
 const data = require('./src/populateData');
-const job = require('./src/jobScheduler');
+const scheduler = require('node-schedule');
+
+let job = scheduler.scheduleJob('1 * * * *', function(){
+  data.loadData()
+});
 
 mongoose.Promise = global.Promise;
 mongoose.connect('mongodb://localhost/Trackingdb');
@@ -23,10 +27,6 @@ app.use(bodyParser.json());
 
 const routes = require('./api/routes/trackingRoutes');
 routes(app);
-
-//this runs upon creation of the job
-job.scheduleJob();
-// data.loadData();
 
 app.listen(port);
 

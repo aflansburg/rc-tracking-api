@@ -27,11 +27,10 @@ exports.read_record = function(req, res){
     });
 }
 
-// this will now be relevant since SAP data is being stored and updated with fedexBatchTracking response props
+// refactor to .add_new
 exports.update_many = function(req, res){
     return new Promise((resolve, reject)=>{
         OrderShipment.find({}, (err, data)=>{
-            console.log(req[0])
             let mongoItems = data.map(d=>{
                 return {
                     U_PackTracking: d._doc.U_PackTracking,
