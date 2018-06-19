@@ -11,7 +11,7 @@ function loadData () {
     
     // this should be in the nightly job (need to check if it exists)
     // orderShipmentMdl.collection.drop();
-    trackingMdl.collection.drop();
+    // trackingMdl.collection.drop();
 
     // this should be in the nightly job - it takes a long time to run due to large # of records
     getShipmentData()
@@ -20,7 +20,7 @@ function loadData () {
                 .update_many(data)
                     .then(()=>{
                         let dateConstraint = new Date();
-                        dateConstraint.setDate(dateConstraint.getDate()-2);
+                        dateConstraint.setDate(dateConstraint.getDate()-3);
                         orderShipmentCtrl.retrieve_records({"DocDate": {$gte: dateConstraint}})
                             .then(o=>{
                                 const tracking = o.map(i=>{
@@ -36,6 +36,7 @@ function loadData () {
                                             }
                                         }
                                         data = flatten(data);
+                                        data = data.filter(d=> d !== undefined);
                                         // should work with all carriers? Maybe? Maybe Not??? need to ensure o is array (should be???)
                                         let completeData = data.map(d=>{
                                             let record = {
@@ -43,26 +44,20 @@ function loadData () {
                                                 lastStatus: d.lastStatus,
                                                 lastStatusDate: d.lastStatusDate,
                                                 lastLocation: d.lastLocation,
-                                                shipDate: d.shipDate,
+                                                actualShipDate: d.actualShipDate,
                                                 reason: d.reason,
                                                 orderNum: '',
                                             }
                                             o.forEach(t=>{
                                                 if (String(d.trackingNum) === String(t.U_PackTracking)){
                                                     record.orderNum = t.SalesOrderNum;
+                                                    record.shipDate = t.DocDate;
                                                 }
                                             })
                                             return record;
                                         })
 
-                                        trackingCtrl.create_many(completeData);
-
-                                        // Array.isArray(data[0])
-                                        // ? data.forEach(chunk =>{
-                                        //     chunk &&
-                                        //     trackingCtrl.create_many(chunk);
-                                        //     })
-                                        // : trackingCtrl.create_many(data);
+                                        trackingCtrl.update_many(completeData);
                                     })
                                     .catch(err=>{
                                         console.log(`Error retrieving tracking using getTracking(tracking) method:\n\tError details: ${err}`);

@@ -1,5 +1,6 @@
 // const TRACK_PATH = "http://fedex.com/ws/track/v14";
 
+const debug = require('debug');
 const soap = require("soap");
 // const Throttle = require('promise-parallel-throttle');
 const Bottleneck = require('bottleneck');
@@ -9,6 +10,7 @@ const credentials = require('./data/credentials.json');
 const pd = require('pretty-data').pd;
 
 const limiter = new Bottleneck({minTime: 1500});
+// limiter debugging messages
 limiter.on('debug', function (message, data) {
     console.log(message);
 })
@@ -37,13 +39,17 @@ const makeRequestPromise = (req) => {
                 try {
                     soap.createClient(wsdl, {namespaceArrayElements: true}, (err, client)=>{
                         try {
-                            client.track(req, (err, result)=>{
-                                let attempts = 0;
-                                const maxAttempts = 3;   
-                                let retry = true;
-                                while(retry){
-                                    try {
-                                        // console.log(JSON.stringify(result));
+                            // recursively try if error returned in result object
+                            const maxRetries = 5;
+                            function tryTrack(retries){
+                                console.log('--executing client.track--');
+                                client.track(req, (err, result)=>{
+                                    if (result === undefined || result.CompletedTrackDetails === undefined){
+                                        console.log(`Undefined returned from SOAP request - will retry:\n\t${JSON.stringify(result)}`);
+                                        setTimeout(function(){ tryTrack(maxRetries - 1); }, 2000);
+                                        return;
+                                    }
+                                    else {
                                         let results = result.CompletedTrackDetails;
                                         // this is a crutch, but with Fedex Prod there shouldn't be null or undefined
                                         // better validation methods needed
@@ -62,7 +68,7 @@ const makeRequestPromise = (req) => {
                                                         lastStatus: t.TrackDetails[0].StatusDetail.Description,
                                                         lastStatusDate: t.TrackDetails[0].StatusDetail.CreationTime,
                                                         lastLocation: t.TrackDetails[0].StatusDetail.Location,
-                                                        shipDate: shipDate,
+                                                        actualShipDate: shipDate,
                                                         reason: t.TrackDetails[0].StatusDetail.AncillaryDetails
                                                                 ? t.TrackDetails[0].StatusDetail.AncillaryDetails[0].ReasonDescription
                                                                 : 'No exception or no reason data',
@@ -71,18 +77,13 @@ const makeRequestPromise = (req) => {
                                             }
                                         }) : null);
                                         trckData = trckData.filter(td=> td !== undefined);
-                                        retry = false;
                                         trckData
                                             ? resolve(trckData)
                                             : reject(trckData) // <-- this needs to be fixed
                                     }
-                                    catch(e) {
-                                        if (++attempts === maxAttempts)
-                                            console.log('There was an error parsing the response from FedEx.\n' + e);                                    
-                                    }
-                                }
-                                
-                            })
+                                })
+                            }
+                            tryTrack(maxRetries);
                         }
                         catch (err){
                             console.log(`Error making request to Fedex SOAP API:\n${err}`)

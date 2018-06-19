@@ -13,6 +13,9 @@ const TrackingSchema = new Schema({
     shipDate: {
         type: Date,
     },
+    actualShipDate: {
+        type: Date,
+    },
     lastStatus: {
         type:  String,
     },

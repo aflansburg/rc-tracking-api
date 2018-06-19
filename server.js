@@ -2,14 +2,24 @@ const express = require('express');
 const app = express();
 const port = process.env.PORT || 3000;
 const mongoose = require('mongoose');
-const Tracking = require('./api/models/trackingModel');
+const Tracking = require('./api/models/trackingModel')
+const TrackingCtrl = require('./api/controllers/trackingController');
 const OrderShipment = require('./api/models/orderShipmentModel');
+const OrderShipmentCtrl = require('./api/controllers/orderShipmentController');
 const bodyParser = require('body-parser');
 const data = require('./src/populateData');
 const scheduler = require('node-schedule');
 
+OrderShipmentCtrl.prune_records();
+data.loadData();
+
 let job = scheduler.scheduleJob('1 * * * *', function(){
   data.loadData()
+});
+
+let pruneJob = scheduler.scheduleJob('23 * * *', function(){
+  OrderShipmentCtrl.prune_records();
+  TrackingCtrl.prune_records();
 });
 
 mongoose.Promise = global.Promise;
