@@ -20,6 +20,7 @@ function loadData () {
                 .update_many(data)
                     .then(()=>{
                         let dateConstraint = new Date();
+                        // date constraint has to be > 1 or no data will be returned
                         dateConstraint.setDate(dateConstraint.getDate()-3);
                         orderShipmentCtrl.retrieve_records({"DocDate": {$gte: dateConstraint}})
                             .then(o=>{
@@ -57,7 +58,10 @@ function loadData () {
                                             return record;
                                         })
 
-                                        trackingCtrl.update_many(completeData);
+                                        trackingCtrl.update_many(completeData)
+                                            .then(()=>{
+                                                console.log('Tracking collection updated.');
+                                            })
                                     })
                                     .catch(err=>{
                                         console.log(`Error retrieving tracking using getTracking(tracking) method:\n\tError details: ${err}`);

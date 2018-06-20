@@ -39,16 +39,15 @@ exports.update_many = function(req, res){
 exports.update_many = function(req, res){
     return new Promise((resolve, reject)=>{
         Tracking.find({}, (err, data)=>{
-            console.log(data[0]);
             let mongoItems = data.map(d=>{
                 return {
-                    trackingNum: d._doc.trackingNum,
-                    orderNum: d._doc.orderNum,
-                    shipDate: Number(d._doc.shipDate),
-                    lastStatus: Number(d._doc.lastStatus),
-                    lastStatusDate: d._doc.lastStatusDate,
-                    lastLocation: d._doc.lastLocation,
-                    reason: d._doc.reason,
+                    trackingNum: d.trackingNum,
+                    orderNum: d.orderNum,
+                    shipDate: Number(d.shipDate),
+                    lastStatus: Number(d.lastStatus),
+                    lastStatusDate: d.lastStatusDate,
+                    lastLocation: d.lastLocation,
+                    reason: d.reason,
                 }
             })
     
@@ -67,17 +66,22 @@ exports.update_many = function(req, res){
             })
             console.log(`Inserting ${newItems.length} new items with no previous tracking entries.`);
             Tracking.insertMany(newItems, {ordered: false})
-            existingItems.forEach(e=>{
-                Tracking.findOneAndUpdate({"trackingNum": e.trackingNum}, 
-                        {
-                            lastStatus: e.lastStatus, 
-                            lastStatusDate: e.lastStatusDate,
-                            lastLocation: e.lastLocation,
-                            reason: e.reason,
-                        }
-                    );
-            })
-            resolve();
+                .then(()=>{
+                    existingItems.forEach(e=>{
+                        Tracking.findOneAndUpdate({"trackingNum": e.trackingNum}, 
+                                {
+                                    lastStatus: e.lastStatus, 
+                                    lastStatusDate: e.lastStatusDate,
+                                    lastLocation: e.lastLocation,
+                                    reason: e.reason,
+                                },
+                                ()=>{
+                                    // this is just here to force query to execute
+                                }
+                            );
+                    })
+                    resolve();
+                })
         })
     })
 }
@@ -92,7 +96,7 @@ exports.delete_tracking = function(req, res){
 
 exports.prune_records = function(){
     let dateConstraint = new Date();
-    dateConstraint.setDate(dateConstraint.getDate()-10);
+    dateConstraint.setDate(dateConstraint.getDate()-3);
     Tracking.deleteMany({"shipDate": {$lt: dateConstraint}}, function(){
         console.log('Old tracking records pruned.')
     });

@@ -10,14 +10,13 @@ const bodyParser = require('body-parser');
 const data = require('./src/populateData');
 const scheduler = require('node-schedule');
 
-OrderShipmentCtrl.prune_records();
 data.loadData();
 
-let job = scheduler.scheduleJob('1 * * * *', function(){
+let job = scheduler.scheduleJob('0 * * * *', function(){
   data.loadData()
 });
 
-let pruneJob = scheduler.scheduleJob('23 * * *', function(){
+let pruneJob = scheduler.scheduleJob('0 23 * * *', function(){
   OrderShipmentCtrl.prune_records();
   TrackingCtrl.prune_records();
 });
