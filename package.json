@@ -25,6 +25,8 @@
     "pretty-data": "^0.40.0",
     "promise-parallel-throttle": "^3.1.0",
     "queue": "^4.4.2",
+    "request": "^2.87.0",
+    "request-promise-native": "^1.0.5",
     "soap": "^0.24.0",
     "tedious": "^2.6.1",
     "throat": "^4.1.0",

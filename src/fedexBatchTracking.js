@@ -57,26 +57,35 @@ const makeRequestPromise = (req) => {
                                         results = results.filter(r=> r !== undefined);
                                         let trckData = (results ? results.map(t=>{
                                             let shipDate = null;
-                                            t.TrackDetails[0].DatesOrTimes && t.TrackDetails[0].DatesOrTimes.forEach(d=>{
-                                                if (d.Type === "SHIP")
-                                                    shipDate = d.DateOrTimestamp;
-                                            });
-                                            return {
-                                                trackingNum: t.TrackDetails[0].TrackingNumber,
-                                                ...(t.TrackDetails && t.TrackDetails[0].StatusDetail
-                                                    ? {
-                                                        lastStatus: t.TrackDetails[0].StatusDetail.Description,
-                                                        lastStatusDate: t.TrackDetails[0].StatusDetail.CreationTime,
-                                                        lastLocation: t.TrackDetails[0].StatusDetail.Location,
-                                                        actualShipDate: shipDate,
-                                                        reason: t.TrackDetails[0].StatusDetail.AncillaryDetails
-                                                                ? t.TrackDetails[0].StatusDetail.AncillaryDetails[0].ReasonDescription
-                                                                : 'No exception or no reason data',
-                                                    }
-                                                    : {status: 'No status'})
+                                            if (t.TrackDetails !== undefined){
+                                                t.TrackDetails[0].DatesOrTimes && t.TrackDetails[0].DatesOrTimes.forEach(d=>{
+                                                    if (d.Type === "SHIP")
+                                                        shipDate = d.DateOrTimestamp;
+                                                });
+                                                return {
+                                                    trackingNum: t.TrackDetails[0].TrackingNumber,
+                                                    ...(t.TrackDetails && t.TrackDetails[0].StatusDetail
+                                                        ? {
+                                                            lastStatus: t.TrackDetails[0].StatusDetail.Description
+                                                                        ? t.TrackDetails[0].StatusDetail.Description
+                                                                        : 'No status information',
+                                                            lastStatusDate: t.TrackDetails[0].StatusDetail.CreationTime,
+                                                            lastLocation: t.TrackDetails[0].StatusDetail.Location,
+                                                            actualShipDate: shipDate,
+                                                            reason: t.TrackDetails[0].StatusDetail.AncillaryDetails
+                                                                    ? t.TrackDetails[0].StatusDetail.AncillaryDetails[0].ReasonDescription
+                                                                    : 'No exception or no reason data',
+                                                        }
+                                                        : {lastStatus: 'No status'})
+                                                }
                                             }
+                                            else {
+                                                return null;
+                                            }
+                                            
                                         }) : null);
                                         trckData = trckData.filter(td=> td !== undefined);
+                                        trckData = trckData.filter(td=> td !== null);
                                         trckData
                                             ? resolve(trckData)
                                             : reject(trckData) // <-- this needs to be fixed
