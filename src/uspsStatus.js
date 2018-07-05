@@ -10,21 +10,10 @@ function parseStatus(uspsStatus){
             'we attempted.*at (\\d+:\\d\\d\\s\\w+) on (\\w+ \\d+, \\d+) in (\\w+.*,\\s\\w+\\s\\d+|\\w+ \\s\\w+\\s\\d+) (?:and|or|but|however) (.*).|',
             'The item is currently in transit to the next facility.*f (\\w+\\s\\d+,\\s\\d+)|',
             'Your item arrived.*on\\s(\\w+\\s\\d+,\\s\\d+) at (\\d+:\\d+\\s\\w+)|',
-            'your item arrived at the\\s(\\w+, \\w{2}\\s\\d{5}|\\w+ \\w{2}\\s\\d{5}).*at\\s(\\d{1,2}:\\d{2}\\s\\w{2}) on (\\w+\\s\\d{1,2},\\s\\d{4})|',
-            'your item.*at\\s(\\d{1,2}:\\d{2} \\w{2}) on (\\w+ \\d{1,2}, \\d{4})\\sin\\s(\\w+.*,\\s\\w+\\s\\d+|\\w+ \\s\\w+\\s\\d+)'
+            'your item arrived at the\\s(\\w+, \\w{2}\\s\\d{5}|\\w+ \\w{2}\\s\\d{5}|\\w+\\s\\w+,\\s\\w{2}).*at\\s(\\d{1,2}:\\d{2}\\s\\w{2}) on (\\w+\\s\\d{1,2},\\s\\d{4})|',
+            'your item.*at\\s(\\d{1,2}:\\d{2} \\w{2}) on (\\w+ \\d{1,2}, \\d{4})\\sin\\s(\\w+\\s\\w{2}\\s\\d{5}|\\w+,\\s\\w{2}\\s\\d{5}|\\w+\\s\\w+,\\s\\w{2}\\s\\d{5}|',
+            '\\w+\\s\\w+\\s\\w{2}\\s\\d{5}|\\w+\\s\\w+\\s\\w{2}\\s\\d{5})'
         ].join(''), 'i');
-        // new RegExp([
-        //     '^a shipping label has been prepared for your item at (\\d{1,2}:\\d{2} \\w{2}) on (\\w+ \\d{1,2}, \\d{4}) in (\\w+, \\w+ \\d+)|',
-        //     'your item departed our (\\w+,|\\w+ \\w+).*on (\\w+ \\d+, \\d+) at (\\d+:\\d\\d\\s\\w+)|',
-        //     'your item arrived at our\\D+in (\\w+, \\w+|\\w+ \\w+).*on (\\w+ \\d+, \\d+) at (\\d+:\\d\\d\\s\\w+)|',
-        //     'your item was delivered.*(\\d+:\\d\\d\\s\\w+) on (\\w+ \\d+, \\d+) in (\\w+,\\s\\w+\\s\\d+|\\w+ \\s\\w+\\s\\d+)|',
-        //     'Your item is out for del.* on (\\w+\\s\\d+,\\s\\d+) at (\\d+:\\d+\\s\\w+) in (\\w+,\\s\\w+\\s\\d+|\\w.*\\d{5})|',
-        //     'usps was unable to deliver.*of (\\d+:\\d\\d\\s\\w+) on (\\w+ \\d+, \\d+) in (\\w+,\\s\\w+\\s\\d+|\\w+ \\s\\w+\\s\\d+).',
-        //     ' (.*)|we attempted.*at (\\d+:\\d\\d\\s\\w+) on (\\w+ \\d+, \\d+) in (\\w+,\\s\\w+\\s\\d+|\\w+ \\s\\w+\\s\\d+) ',
-        //     '(?:and|or|but|however) (.*).|The item is currently in transit to the next facility.*f (\\w+\\s\\d+,\\s\\d+)|',
-        //     'Your item arrived.*on\\s(\\w+\\s\\d+,\\s\\d+) at (\\d+:\\d+\\s\\w+)|',
-        //     'your item arrived at the\\s(\\w+, \\w{2}\\s\\d{5}|\\w+ \\w{2}\\s\\d{5}).*at\\s(\\d{1,2}:\\d{2}\\s\\w{2}) on (\\w+\\s\\d{1,2},\\s\\d{4})'
-        // ].join(''), 'i');
     
     let matches = re.exec(uspsStatus);
 
@@ -101,7 +90,18 @@ function parseStatus(uspsStatus){
         d.timestampStr = `${matches[29]} ${matches[28]}`;
         d.location = matches[27];
     }
-    console.log(d);
+    else if (matches[30] && matches[32]){
+        d.lastStatus = 'Arrived at Post Office';
+        d.timestampStr = `${matches[31]} ${30}`;
+        d.location = matches[32];
+    }
+    else {
+        // this should be logged somewhere
+        console.log(`This one won't have complete data:\n${uspsStatus}`)
+        d.lastStatus = uspsStatus;
+        d.timestampStr = 'Not parsed';
+        d.location = 'Not parsed';
+    }
     return(d);
 }
 

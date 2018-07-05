@@ -66,7 +66,6 @@ function loadData () {
                                                 data = data.filter(d=> d !== undefined);
                                                 data = data.filter(d=> d !== null);
                                                 data.forEach(d=>{
-                                                    console.log(d);
                                                     let record = {};
                                                     if (d.reason){
                                                         let statusData = parseUspsStatus(d.reason);
