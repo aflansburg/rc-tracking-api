@@ -4,19 +4,14 @@ const endpoint = 'https://secure.shippingapis.com/ShippingAPI.dll?API=TrackV2&XM
 const parseResponse = require('xml2js').parseString;
 const Bottleneck = require('bottleneck');
 
-const limiter = new Bottleneck({minTime: 1500});
+const limiter = new Bottleneck({minTime: 1750});
 limiter.on('debug', (message, data)=>{
     console.log(message);
 })
 
 const maxTracking = 10;
-// const testTracking = ['9405515902209909229600', '9405515902209909229914', '9405515902209909229921', '9405515902209909229648', '9405515902209909229938',
-//                       '9405515902209909229945', '9405515902209909229952', '9405515902209909229877', '9405515902209909229884', '9405515902209909229891',
-//                       '9405515902209909229907']
 
 const requestStart = `<TrackRequest USERID="${credentials.user}">`;
-
-// console.log(`Using user: ${credentials.user}`);
 
 // refactor this and store in a utils.js
 const chunkArray = (arr, chunk_size) =>{
@@ -30,18 +25,20 @@ const chunkArray = (arr, chunk_size) =>{
 // * TODO * Need to implement the same tryTrack() recursive func from fedexBatchTracking
 async function uspsBatchTrack(trackingNumbers){
     trackingNumbers = trackingNumbers.filter(num => num.startsWith('9'));
+    trackingNumbers = trackingNumbers.filter(num => num !== null)
     let promiseArray = [];
-    const tracking = trackingNumbers.length > 10
+    const tracking = trackingNumbers.length > maxTracking
                      ? chunkArray(trackingNumbers, maxTracking)
                      : trackingNumbers;
-    if (Array.isArray(tracking[1])){
+    if (tracking && Array.isArray(tracking[0])){
         console.log(`There will be ${tracking.length+1} calls to the USPS Tracking API`);
         tracking.forEach(batch=>{
             promiseArray.push(getUspsTracking(batch));
         })
     }
     else {
-        promiseArray.push(getUspsTracking(tracking));
+        tracking &&
+            promiseArray.push(getUspsTracking(tracking));
     }
     return await Promise.all(promiseArray);
 }
@@ -68,7 +65,6 @@ const getUspsTracking = (trackingNumbers) => {
                     })
                         .then(response=>{
                             parseResponse(response, (err, res)=>{
-                                // console.log(JSON.stringify(res));
                                 let tres = {}
                                 let trackInfo = [];
                                 if(err)
@@ -94,7 +90,6 @@ const getUspsTracking = (trackingNumbers) => {
                                                 trackInfo.push({
                                                     id: tr['$'].ID,
                                                     lastStatus: '',
-                                                    // progression: tr.TrackDetail,
                                                     reason: tr.TrackSummary[0],
                                                 });
                                             }

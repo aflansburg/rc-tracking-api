@@ -1,11 +1,9 @@
-// const tracking = require('./data/sample_tracking.json').tracking;
 const getShipmentData = require('./shipmentData').getShipmentData;
 const getFedexTracking = require('./fedexBatchTracking').fedexBatchTrack;
 const getUspsTracking = require('./uspsBatchTracking').uspsBatchTrack;
+const getOntracTracking =  require('./ontracBatchTracking').ontrackBatchTrack;
 const trackingCtrl  = require('../api/controllers/trackingController');
-// const trackingMdl = require('../api/models/trackingModel');
 const orderShipmentCtrl  = require('../api/controllers/orderShipmentController');
-// const orderShipmentMdl = require('../api/models/orderShipmentModel')
 const flatten = require('array-flatten');
 const parseUspsStatus = require('./uspsStatus').parseStatus;
 
@@ -18,7 +16,7 @@ function loadData () {
                     .then(()=>{
                         let dateConstraint = new Date();
                         // date constraint has to be > 1 or no data will be returned
-                        dateConstraint.setDate(dateConstraint.getDate()-3);
+                        dateConstraint.setDate(dateConstraint.getDate()-5);
                         orderShipmentCtrl.retrieve_records({"DocDate": {$gte: dateConstraint}})
                             .then(o=>{
                                 const tracking = o.map(i=>{
@@ -103,6 +101,53 @@ function loadData () {
                                             })
                                             .catch(err=>{
                                                 console.log(`Some error in getUspsTracking in populateData:\n\t${err}`)
+                                            })
+                                        getOntracTracking(tracking)
+                                            .then(data=>{
+                                                if (!Array.isArray(data)){
+                                                    return {
+                                                        error: 'invalid data returned',
+                                                    }
+                                                }
+                                                data = flatten(data);
+                                                data = data.filter(d=> d !== undefined);
+                                                data = data.filter(d=> d !== null);
+                                                data.forEach(d=>{
+                                                    let record = {};
+                                                    if (d.reason){
+                                                        // let statusData = parseUspsStatus(d.reason);
+                                                        record = {
+                                                            trackingNum: d.id,
+                                                            lastStatus: d.lastStatus,
+                                                            reason: d.reason
+                                                        }
+                                                    }
+                                                    else {
+                                                        record = {
+                                                            trackingNum: d.id,
+                                                            lastStatus: 'No data at this time',
+                                                            reason: d.reason,
+                                                        }
+                                                    }
+                                                    o.forEach(t=>{
+                                                        if (String(record.trackingNum) === String(t.U_PackTracking)){
+                                                            record.orderNum = t.SalesOrderNum;
+                                                            record.shipDate = t.DocDate;
+                                                        }
+                                                    })
+                                                    completeData.push(record);
+                                                })
+                                                // update trackings collection after usps completes
+                                                trackingCtrl.update_many(completeData)
+                                                    .then(()=>{
+                                                        console.log('Tracking collection updated.');
+                                                    })
+                                                    .catch (err=>{
+                                                        console.log(`error writing during update_many:\n\t${err}`);
+                                                    });
+                                            })
+                                            .catch(err=>{
+                                                console.log(`Error in getOntracTracking:\n${err}`);
                                             })
                                     })
                                     .catch(err=>{

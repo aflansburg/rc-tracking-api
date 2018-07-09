@@ -5,8 +5,6 @@ const Schema = mongoose.Schema;
 const OrderShipmentSchema = new Schema({
     U_PackTracking: {
         type: String,
-        // index: true,
-        // unique: true,
     },
     DocDate: {
         type: Date,

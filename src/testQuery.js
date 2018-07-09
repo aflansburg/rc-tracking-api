@@ -9,7 +9,8 @@ const config = {
     }
 }
 
-const sqlQuery = `SELECT  [U_PackTracking],[DocDate],[SalesOrderNum],[PackageNum]FROM [RC_Live_build].[dbo].[TrackingNumberStatus]WHERE [DocDate] >= DATEADD(day, -7, GETDATE())`;
+// utility script for testing queries to SAP
+const sqlQuery = `SELECT [U_PackTracking],[DocDate],[SalesOrderNum],[PackageNum]FROM [RC_Live_build].[dbo].[TrackingNumberStatus]WHERE [DocDate] >= DATEADD(day, -7, GETDATE()) AND [SalesOrderNum] = '2295672'`;
 
 async function getShipmentData () {
     const pool = new sql.ConnectionPool(config);
@@ -30,10 +31,11 @@ async function getShipmentData () {
 
 }
 
+getShipmentData()
+    .then(data=>{
+        console.log(data);
+    })
+
 sql.on('error', err => {
     // ... error handler
 })
-
-module.exports = {
-    getShipmentData
-}

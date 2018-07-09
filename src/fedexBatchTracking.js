@@ -88,7 +88,7 @@ const makeRequestPromise = (req) => {
                                         trckData = trckData.filter(td=> td !== null);
                                         trckData
                                             ? resolve(trckData)
-                                            : reject(trckData) // <-- this needs to be fixed
+                                            : reject(trckData) // <-- this needs to be remediated
                                     }
                                 })
                             }

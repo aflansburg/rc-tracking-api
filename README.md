@@ -1,17 +1,21 @@
-# fedex-rest-api
+# rc-tracking-api
 
-This project consists of functionality to make requests and consume responses from Fedex Web Services (SOAP API) while offering a RESTful API that exposes an endpoint for returning data from a MongoDB where the aforementioned Fedex responses are stored. CRUD operations supported.
+This API aggregates data from the FedEx Web Services (SOAP), USPS, and OnTrac APIs and exposes it via a RESTful API.
 
-The expected flow of this project:
+The flow of this application:
 
-* Service makes requests to Fedex SOAP API with tracking numbers
-* SOAP API returns response
-* Response is written to MongoDB
+* A query is made to SAP for order data from a specific time range and stored in the 'ordershipments' collection in MongoDb
+* App makes requests to Fedex SOAP, USPS, and OnTrac APIs with tracking numbers
+* APIs returns response which is parsed, aggregated, and then stored in the 'trackings' collection in MongoDb
 * RESTful API accepts "GET" requests and responds with information from the MongoDB
 
-The original idea was to make a request to the RESTful API and then have the service make the request to the Fedex SOAP API, but this requires storing a potentially large amount of information in memory until all processes complete.
+Side operations:
+* An hourly job is run to update order and tracking information
+* A nightly job is run to prune old records from the MongoDB collections
 
-Current dev environment consists of:
+Environment consists of:
 
 * MongoDB 3.6
 * Node 8.11.1 (LTS)
+
+No Open Source license has been assigned as this project is currently maintained by aflansburg@roughcountry.com and no decisions regarding licensing have been made.

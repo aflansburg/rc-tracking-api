@@ -2,9 +2,12 @@ const express = require('express');
 const app = express();
 const port = process.env.PORT || 3000;
 const mongoose = require('mongoose');
+
+// declared but unused just to register the schemas
 const Tracking = require('./api/models/trackingModel')
-const TrackingCtrl = require('./api/controllers/trackingController');
 const OrderShipment = require('./api/models/orderShipmentModel');
+
+const TrackingCtrl = require('./api/controllers/trackingController');
 const OrderShipmentCtrl = require('./api/controllers/orderShipmentController');
 const bodyParser = require('body-parser');
 const data = require('./src/populateData');
