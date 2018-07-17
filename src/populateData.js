@@ -69,10 +69,10 @@ function loadData () {
                                                         let statusData = parseUspsStatus(d.reason);
                                                         record = {
                                                             trackingNum: d.id,
-                                                            lastStatus: statusData.lastStatus,
-                                                            lastStatusDate: statusData.timestampStr,
-                                                            lastLocation: statusData.location,
-                                                            reason: d.reason
+                                                            lastStatus: statusData.lastStatus && statusData.lastStatus,
+                                                            lastStatusDate: statusData.timestampStr && statusData.timestampStr,
+                                                            lastLocation: statusData.location && statusData.location,
+                                                            reason: d.reason && d.reason
                                                         }
                                                     }
                                                     else {

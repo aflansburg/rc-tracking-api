@@ -12,7 +12,11 @@ function parseStatus(uspsStatus){
             'Your item arrived.*on\\s(\\w+\\s\\d+,\\s\\d+) at (\\d+:\\d+\\s\\w+)|',
             'your item arrived at the\\s(\\w+, \\w{2}\\s\\d{5}|\\w+ \\w{2}\\s\\d{5}|\\w+\\s\\w+,\\s\\w{2}).*at\\s(\\d{1,2}:\\d{2}\\s\\w{2}) on (\\w+\\s\\d{1,2},\\s\\d{4})|',
             'your item.*at\\s(\\d{1,2}:\\d{2} \\w{2}) on (\\w+ \\d{1,2}, \\d{4})\\sin\\s(\\w+\\s\\w{2}\\s\\d{5}|\\w+,\\s\\w{2}\\s\\d{5}|\\w+\\s\\w+,\\s\\w{2}\\s\\d{5}|',
-            '\\w+\\s\\w+\\s\\w{2}\\s\\d{5}|\\w+\\s\\w+\\s\\w{2}\\s\\d{5})|.*has not been updated as of\\s(\\w+\\s\\d{1,2},\\s\\d{4},\\s\\d{1,2}:\\d{1,2}\\s\\w{2})'
+            '\\w+\\s\\w+\\s\\w{2}\\s\\d{5}|\\w+\\s\\w+\\s\\w{2}\\s\\d{5})|.*has not been updated as of\\s(\\w+\\s\\d{1,2},\\s\\d{4},\\s\\d{1,2}:\\d{1,2}\\s\\w{2})|',
+            'your item.*\\s(\\d{1,2}:\\d{2}\\s(?:a|p)m)\\son\\s(\\w+\\s\\d{1,2},\\s\\d{4})\\sin\\s(.*,\\s\\w{2}\\s\\d{5}).|',
+            'all sorting.*(\\d{1,2}:\\d{2}\\s(?:a|p)m)\\son\\s(\\w+\\s\\d{1,2},\\s\\d{4})\\sin\\s(.*\\d{5}).|',
+            'held at the\\s(.*,\\s\\w{2}\\s\\d{5})\\s.*at\\s(\\d{1,2}:\\d{2}\\s(?:a|p)m)\\son\\s(\\w+\\s\\d{1,2},\\s\\d{4})|',
+            'forwarded.*at\\s(\\d{1,2}:\\d{2}\\s(?:a|p)m)\\son\\s(\\w+\\s\\d{1,2},\\s\\d{4})\\sin\\s(\\w+.*,\\s\\w{2})'
         ].join(''), 'i');
     
     let matches = re.exec(uspsStatus);
@@ -92,6 +96,26 @@ function parseStatus(uspsStatus){
             d.timestampStr = `${matches[33]}`;
             d.location = 'Not parsed';
         }
+        else if (matches[34] && matches[36]){
+            d.lastStatus = 'Arrived at Post Office';
+            d.timestampStr = `${matches[35]} ${matches[34]}`;
+            d.location = matches[36];
+        }
+        else if (matches[37] && matches[39]){
+            d.lastStatus = 'Arrived at Post Office';
+            d.timestampStr = `${matches[38]} ${matches[37]}`;
+            d.location = matches[39];
+        }
+        else if (matches[40] && matches[42]){
+            d.lastStatus = 'Arrived at Post Office';
+            d.timestampStr = `${matches[41]} ${matches[40]}`;
+            d.location = matches[42];
+        }
+        else if (matches[43] && matches[45]){
+            d.lastStatus = 'Forwarded to Address';
+            d.timestampStr = `${matches[44]} ${matches[43]}`;
+            d.location = matches[45];
+        }
         else {
             // this should be logged somewhere
             console.log(`This one won't have complete data:\n${uspsStatus}`)
@@ -105,8 +129,9 @@ function parseStatus(uspsStatus){
         console.log(`\n********************\n${uspsStatus} had no matches in uspsStatus.js!\n********************\n`);
         // this should be logged somewhere
         d.lastStatus = uspsStatus;
-        d.timestampStr = 'Not parsed';
-        d.location = 'Not parsed';
+        d.timestampStr = '';
+        d.location = '';
+        return(d);
     }
     
 }
