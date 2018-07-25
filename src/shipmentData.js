@@ -9,7 +9,7 @@ const config = {
     }
 }
 
-const sqlQuery = `SELECT  [U_PackTracking],[DocDate],[SalesOrderNum],[PackageNum]FROM [RC_Live_build].[dbo].[TrackingNumberStatus]WHERE [DocDate] >= DATEADD(day, -7, GETDATE())`;
+const sqlQuery = `SELECT  [U_PackTracking],[ActDelDate],[SalesOrderNum],[PackageNum],[WhsCode]FROM [RC_Live_build].[dbo].[TrackingNumberStatus]WHERE [ActDelDate] >= DATEADD(day, -7, GETDATE())`;
 
 async function getShipmentData () {
     const pool = new sql.ConnectionPool(config);

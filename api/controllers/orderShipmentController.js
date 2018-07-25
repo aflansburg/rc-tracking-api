@@ -34,9 +34,10 @@ exports.update_many = function(req, res){
             let mongoItems = data.map(d=>{
                 return {
                     U_PackTracking: d._doc.U_PackTracking,
-                    DocDate: d._doc.DocDate,
+                    ActDelDate: d._doc.ActDelDate,
                     PackageNum: Number(d._doc.PackageNum),
                     SalesOrderNum: Number(d._doc.SalesOrderNum),
+                    WhsCode: d._doc.WhsCode,
                 }
             })
     
@@ -65,8 +66,8 @@ exports.delete_record = function(req, res){
 
 exports.prune_records = function(){
     let dateConstraint = new Date();
-    dateConstraint.setDate(dateConstraint.getDate()-3);
-    OrderShipment.deleteMany({"DocDate": {$lt: dateConstraint}}, function(){
+    dateConstraint.setDate(dateConstraint.getDate()-5);
+    OrderShipment.deleteMany({"ActDelDate": {$lt: dateConstraint}}, function(){
         console.log('Old order shipment records pruned.')
     });
 }

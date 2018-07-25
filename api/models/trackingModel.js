@@ -27,7 +27,13 @@ const TrackingSchema = new Schema({
     },
     reason: {
         type: String,
-    }
+    },
+    warehouse: {
+        type: String,
+    },
+    shipmentCreated: {
+        type: Date,
+    },
 });
 
 module.exports = mongoose.model('Tracking', TrackingSchema);

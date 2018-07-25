@@ -6,13 +6,16 @@ const OrderShipmentSchema = new Schema({
     U_PackTracking: {
         type: String,
     },
-    DocDate: {
+    ActDelDate: {
         type: Date,
     },
     SalesOrderNum: {
         type:  String,
     }  ,
     PackageNum: {
+        type: String,
+    },
+    WhsCode: {
         type: String,
     },
 });

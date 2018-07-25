@@ -4,9 +4,9 @@ const Bottleneck = require('bottleneck');
 
 const limiter = new Bottleneck({minTime: 3000});
 // limiter debugging messages
-limiter.on('debug', function (message, data) {
-    console.log(message);
-})
+// limiter.on('debug', function (message, data) {
+//     console.log(message);
+// })
 
 const maxTracking = 15;
 // at some point might try using the tracking details page endpoint (see Ontrac tracking lookup) - should provide more info
@@ -45,7 +45,7 @@ const getOntracTracking = (trackingNumbers) => {
                 // recursively retry if error returned in result
                 const maxRetries = 5;
                 function tryTrack(retries){
-                    console.log(`--executing client.track--`);
+                    // console.log(`--executing client.track--`);
                     let requestBody = requestString;
                     // logic here for multiple tracking numbers to build request body
                     Array.isArray(trackingNumbers)
@@ -71,10 +71,15 @@ const getOntracTracking = (trackingNumbers) => {
                             }
                             if (res){
                                 res.forEach(tr=>{
+                                    let shipDate = null;
+                                    if (tr.ShippedDate){
+                                        shipDate = tr.ShippedDate;
+                                    }
                                     trackInfo.push({
                                         id: tr.Tracking,
                                         lastStatus: tr.StatuscodeDisplayText,
                                         reason: tr.StatuscodeDisplayText,
+                                        shipDate: shipDate,
                                     });
                                 })
                                 trackInfo

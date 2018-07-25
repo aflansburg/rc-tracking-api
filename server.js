@@ -19,7 +19,12 @@ let job = scheduler.scheduleJob('0 * * * *', function(){
   data.loadData()
 });
 
-let pruneJob = scheduler.scheduleJob('0 23 * * *', function(){
+let pruneJob = scheduler.scheduleJob('30 7 * * *', function(){
+  OrderShipmentCtrl.prune_records();
+  TrackingCtrl.prune_records();
+});
+
+let pruneJob2 = scheduler.scheduleJob('0 23 * * *', function(){
   OrderShipmentCtrl.prune_records();
   TrackingCtrl.prune_records();
 });
@@ -42,5 +47,5 @@ routes(app);
 
 app.listen(port);
 
-console.log('Fedex SOAP Node RESTful API server started on :' + port);
+console.log('RC Tracking Node.js RESTful API server started on :' + port);
 

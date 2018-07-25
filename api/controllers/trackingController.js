@@ -29,16 +29,18 @@ exports.read_tracking = function(req, res){
     });
 }
 
-// this will now be relevant since SAP data is being stored and updated with fedexBatchTracking response props
-exports.update_many = function(req, res){
-    Tracking.updateMany({_id: req.params.trackingId}, req.body, {upsert: true}, (err, tracking)=>{
-        res.json(tracking);
-    });
-}
+// // this will now be relevant since SAP data is being stored and updated with fedexBatchTracking response props
+// exports.update_many = function(req, res){
+//     Tracking.updateMany({_id: req.params.trackingId}, req.body, {upsert: true}, (err, tracking)=>{
+//         res.json(tracking);
+//     });
+// }
 
 exports.update_many = function(req, res){
     return new Promise((resolve, reject)=>{
         Tracking.find({}, (err, data)=>{
+            if (err)
+                console.log(err);
             let mongoItems = data.map(d=>{
                 return {
                     trackingNum: d.trackingNum,
@@ -48,6 +50,8 @@ exports.update_many = function(req, res){
                     lastStatusDate: d.lastStatusDate,
                     lastLocation: d.lastLocation,
                     reason: d.reason,
+                    warehouse: d.warehouse ? d.warehouse : '',
+                    shipmentCreated: d.shipmentCreated ? d.shipmentCreated : null,
                 }
             })
     
@@ -74,6 +78,7 @@ exports.update_many = function(req, res){
                                     lastStatusDate: e.lastStatusDate,
                                     lastLocation: e.lastLocation,
                                     reason: e.reason,
+                                    shipDate: e.shipDate,
                                 },
                                 ()=>{
                                     // this is just here to force query to execute
@@ -81,6 +86,9 @@ exports.update_many = function(req, res){
                             );
                     })
                     resolve();
+                })
+                .catch(err=>{
+                    console.log('Insert Many failure: ' + err);
                 })
         })
     })
@@ -96,8 +104,11 @@ exports.delete_tracking = function(req, res){
 
 exports.prune_records = function(){
     let dateConstraint = new Date();
-    dateConstraint.setDate(dateConstraint.getDate()-3);
+    dateConstraint.setDate(dateConstraint.getDate()-5);
     Tracking.deleteMany({"shipDate": {$lt: dateConstraint}}, function(){
-        console.log('Old tracking records pruned.')
+        console.log('Old tracking records pruned by shipDate.')
+    });
+    Tracking.deleteMany({"lastStatusDate": {$lt: dateConstraint}}, function(){
+        console.log('Old tracking records pruned by lastStatusDate.')
     });
 }

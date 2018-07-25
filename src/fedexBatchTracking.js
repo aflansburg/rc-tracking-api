@@ -1,19 +1,14 @@
-// const TRACK_PATH = "http://fedex.com/ws/track/v14";
-
-const debug = require('debug');
 const soap = require("soap");
-// const Throttle = require('promise-parallel-throttle');
 const Bottleneck = require('bottleneck');
-const fs = require("fs");
 const wsdl = "https://s3-us-west-2.amazonaws.com/abeapps/TrackService_v14.wsdl";
 const credentials = require('./data/credentials.json');
-const pd = require('pretty-data').pd;
+const fs = require('fs');
 
 const limiter = new Bottleneck({minTime: 1500});
 // limiter debugging messages
-limiter.on('debug', function (message, data) {
-    console.log(message);
-})
+// limiter.on('debug', function (message, data) {
+//     console.log(message);
+// })
 
 const auth = {
     key: credentials.webSvcProduction.key,
@@ -31,7 +26,6 @@ const chunkArray = (arr, chunk_size) => {
     return results;
 }
 
-// need to throttle each of these
 const makeRequestPromise = (req) => {
         return limiter.schedule(()=>{
             return new Promise((resolve, reject) =>{
@@ -42,7 +36,7 @@ const makeRequestPromise = (req) => {
                             // recursively try if error returned in result object
                             const maxRetries = 5;
                             function tryTrack(retries){
-                                console.log('--executing client.track--');
+                                // console.log('--executing client.track--');
                                 client.track(req, (err, result)=>{
                                     if (result === undefined || result.CompletedTrackDetails === undefined){
                                         console.log(`Undefined returned from SOAP request - will retry:\n\t${JSON.stringify(result)}`);
@@ -57,10 +51,14 @@ const makeRequestPromise = (req) => {
                                         results = results.filter(r=> r !== undefined);
                                         let trckData = (results ? results.map(t=>{
                                             let shipDate = null;
+                                            if (t.TrackDetails[0].TrackingNumber === '452132574984'){
+                                                console.log(JSON.stringify(t));
+                                            }
                                             if (t.TrackDetails !== undefined){
                                                 t.TrackDetails[0].DatesOrTimes && t.TrackDetails[0].DatesOrTimes.forEach(d=>{
-                                                    if (d.Type === "SHIP")
+                                                    if (d.Type === "SHIP"){
                                                         shipDate = d.DateOrTimestamp;
+                                                    }
                                                 });
                                                 return {
                                                     trackingNum: t.TrackDetails[0].TrackingNumber,
@@ -68,7 +66,9 @@ const makeRequestPromise = (req) => {
                                                         ? {
                                                             lastStatus: t.TrackDetails[0].StatusDetail.Description
                                                                         ? t.TrackDetails[0].StatusDetail.Description
-                                                                        : 'No status information',
+                                                                        : t.DuplicateWaybill === true 
+                                                                        ? 'Duplicate waybills found'
+                                                                        :'No status information',
                                                             lastStatusDate: t.TrackDetails[0].StatusDetail.CreationTime,
                                                             lastLocation: t.TrackDetails[0].StatusDetail.Location,
                                                             actualShipDate: shipDate,
@@ -82,7 +82,6 @@ const makeRequestPromise = (req) => {
                                             else {
                                                 return null;
                                             }
-                                            
                                         }) : null);
                                         trckData = trckData.filter(td=> td !== undefined);
                                         trckData = trckData.filter(td=> td !== null);

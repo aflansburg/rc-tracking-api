@@ -10,7 +10,7 @@ const config = {
 }
 
 // utility script for testing queries to SAP
-const sqlQuery = `SELECT [U_PackTracking],[DocDate],[SalesOrderNum],[PackageNum]FROM [RC_Live_build].[dbo].[TrackingNumberStatus]WHERE [DocDate] >= DATEADD(day, -7, GETDATE()) AND [SalesOrderNum] = '2295672'`;
+const sqlQuery = `SELECT [U_PackTracking],[ShipDate],[SalesOrderNum],[PackageNum]FROM [RC_Live_build].[dbo].[TrackingNumberStatus]WHERE [ShipDate] >= DATEADD(day, -7, GETDATE()) AND [SalesOrderNum] = '2320221'`;
 
 async function getShipmentData () {
     const pool = new sql.ConnectionPool(config);

@@ -5,13 +5,14 @@ const parseResponse = require('xml2js').parseString;
 const Bottleneck = require('bottleneck');
 
 const limiter = new Bottleneck({minTime: 1750});
-limiter.on('debug', (message, data)=>{
-    console.log(message);
-})
+// limiter.on('debug', (message, data)=>{
+//     console.log(message);
+// })
 
 const maxTracking = 10;
 
-const requestStart = `<TrackRequest USERID="${credentials.user}">`;
+// const requestStart = `<TrackRequest USERID="${credentials.user}">`;
+const requestStart = `<TrackFieldRequest USERID="${credentials.user}">`;
 
 // refactor this and store in a utils.js
 const chunkArray = (arr, chunk_size) =>{
@@ -50,7 +51,7 @@ const getUspsTracking = (trackingNumbers) => {
                 // recursively retry if error returned in result
                 const maxRetries = 5;
                 function tryTrack(retries){
-                    console.log(`--executing client.track--`);
+                    // console.log(`--executing client.track--`);
                     let requestBody = `${requestStart}`;
                     // logic here for multiple tracking numbers to build request body
                     Array.isArray(trackingNumbers)
@@ -58,7 +59,7 @@ const getUspsTracking = (trackingNumbers) => {
                         requestBody += `<TrackID ID="${tn}"></TrackID>`
                     })
                     : requestBody += `<TrackID ID="${trackingNumbers}"></TrackID>`
-                    requestBody += '</TrackRequest>';
+                    requestBody += '</TrackFieldRequest>';
                     request.get({
                         uri: endpoint + requestBody,
                         forever: true,
@@ -70,28 +71,22 @@ const getUspsTracking = (trackingNumbers) => {
                                 if(err)
                                     console.log(err);
                                 else {
-                                    if (res === undefined || !res){
-                                        console.log(`THIS REQUEST RETURNED NULL:\n\t${endpoint+requestBody}`);
-                                    }
-                                    if (res.TrackResponse.TrackInfo){
+                                    if (res.TrackResponse.TrackInfo !== undefined){
                                         res.TrackResponse.TrackInfo.forEach(tr=>{
-                                            if(tr.TrackSummary === undefined && tr.Error.Number !== undefined){
-                                                trackInfo.push({
+                                            let shipData = {}
+                                            if(tr.TrackSummary){
+                                                shipData = {
                                                     id: tr['$'].ID,
-                                                    lastStatus: tr.TrackSummary[0],
-                                                    reason: 'Label Created, not yet in system',
-                                                    lastStatus: 'Shipment information sent to USPS'
-                                                });
+                                                    lastStatus: tr.TrackSummary[0].Event[0],
+                                                    reason: tr.TrackSummary[0].Event[0],
+                                                }
+                                                if (tr.TrackSummary && tr.TrackSummary[0].Event[0] === "Shipping Label Created, USPS Awaiting Item"){
+                                                    shipData.shipDate = tr.TrackSummary[0].EventDate[0];
+                                                }
+                                                trackInfo.push(shipData);
                                             }
                                             else if (tr.TrackSummary === undefined || !tr.TrackSummary){
                                                resolve();
-                                            }
-                                            else {
-                                                trackInfo.push({
-                                                    id: tr['$'].ID,
-                                                    lastStatus: '',
-                                                    reason: tr.TrackSummary[0],
-                                                });
                                             }
                                         })
                                         trackInfo
@@ -99,15 +94,8 @@ const getUspsTracking = (trackingNumbers) => {
                                             : reject(trackInfo)
                                     }
                                     else {
-                                        tres = res.TrackResponse.TrackInfo[0];
-                                        trackInfo.push({
-                                            id: tr['$'].ID,
-                                            lastStatus: tres.TrackSummary[0],
-                                            progression: tres.TrackDetail,
-                                        });
-                                        trackInfo && resolve(trackInfo);
-                                    }
-                                    
+                                        console.log(JSON.stringify(res))
+                                    }                                    
                                 }
                             })
                         })
