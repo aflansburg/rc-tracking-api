@@ -5,7 +5,7 @@ const OrderShipment = mongoose.model('OrderShipment');
 
 exports.retrieve_records = function(req, res){
     console.log('Request made to retrieve OrderShipment data: ' + JSON.stringify(req));
-    console.log('returning query object');
+    console.log('Returning OrderShipment data');
     return OrderShipment.find(req).exec();
 }
 
