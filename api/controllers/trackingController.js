@@ -4,10 +4,14 @@ const mongoose = require('mongoose');
 const Tracking = mongoose.model('Tracking');
 
 exports.retrieve_tracking = function(req, res){
-    console.log('Request made to retrieve tracking.');
+    let ip = req.ip;
+    ip = ip[0] === ':' ? ip.substr(7): ip;
+    // **LOG** info level log event
+    console.log(`Request from IP ${ip} for tracking data.`);
     Tracking.find({}, (err, tracking)=>{
         res.json(tracking);
-        console.log('response returned');
+        // **LOG** info level log event
+        console.log(`Response returned to IP ${ip}.`);
     });
 }
 
@@ -29,12 +33,32 @@ exports.read_tracking = function(req, res){
     });
 }
 
-// // this will now be relevant since SAP data is being stored and updated with fedexBatchTracking response props
+// this will now be relevant since SAP data is being stored and updated with fedexBatchTracking response props
 // exports.update_many = function(req, res){
 //     Tracking.updateMany({_id: req.params.trackingId}, req.body, {upsert: true}, (err, tracking)=>{
 //         res.json(tracking);
 //     });
 // }
+
+// this will now be relevant since SAP data is being stored and updated with fedexBatchTracking response props
+exports.update_many1 = function(req, res){
+    return new Promise((resolve, reject)=>{
+        req.forEach(record=>{
+            Tracking.findOneAndUpdate({trackingNum: record.trackingNum},
+                record,
+                {upsert: true},
+                (err, res)=>{
+                    if (err){
+                        console.log(err);
+                        resolve();
+                    }
+                    else {
+                        resolve();
+                    }
+            });
+        })
+    })
+}
 
 exports.update_many = function(req, res){
     return new Promise((resolve, reject)=>{
@@ -80,8 +104,10 @@ exports.update_many = function(req, res){
                                     reason: e.reason,
                                     shipDate: e.shipDate,
                                 },
-                                ()=>{
+                                (err, res)=>{
                                     // this is just here to force query to execute
+                                    if (err)
+                                        console.log(`findOneAndUpdate Error MongoDB:\n${err}`);
                                 }
                             );
                     })

@@ -10,21 +10,21 @@ const TrackingSchema = new Schema({
     orderNum: {
         type: String,
     },
-    shipDate: {
-        type: Date,
-    },
-    actualShipDate: {
-        type: Date,
-    },
+    // shipDate: {
+    //     type: Date,
+    // },
+    // actualShipDate: {
+    //     type: Date,
+    // },
     lastStatus: {
         type:  String,
     },
-    lastStatusDate: {
-        type: Date,
-    },
-    lastLocation: {
-        type: Object,
-    },
+    // lastStatusDate: {
+    //     type: Date,
+    // },
+    // lastLocation: {
+    //     type: Object,
+    // },
     reason: {
         type: String,
     },

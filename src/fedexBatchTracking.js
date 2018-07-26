@@ -39,7 +39,7 @@ const makeRequestPromise = (req) => {
                                 // console.log('--executing client.track--');
                                 client.track(req, (err, result)=>{
                                     if (result === undefined || result.CompletedTrackDetails === undefined){
-                                        console.log(`Undefined returned from SOAP request - will retry:\n\t${JSON.stringify(result)}`);
+                                        console.log(`Undefined returned from SOAP request - will retry:\n\t${err}`);
                                         setTimeout(function(){ tryTrack(maxRetries - 1); }, 2000);
                                         return;
                                     }
@@ -51,9 +51,6 @@ const makeRequestPromise = (req) => {
                                         results = results.filter(r=> r !== undefined);
                                         let trckData = (results ? results.map(t=>{
                                             let shipDate = null;
-                                            if (t.TrackDetails[0].TrackingNumber === '452132574984'){
-                                                console.log(JSON.stringify(t));
-                                            }
                                             if (t.TrackDetails !== undefined){
                                                 t.TrackDetails[0].DatesOrTimes && t.TrackDetails[0].DatesOrTimes.forEach(d=>{
                                                     if (d.Type === "SHIP"){
@@ -66,17 +63,15 @@ const makeRequestPromise = (req) => {
                                                         ? {
                                                             lastStatus: t.TrackDetails[0].StatusDetail.Description
                                                                         ? t.TrackDetails[0].StatusDetail.Description
-                                                                        : t.DuplicateWaybill === true 
-                                                                        ? 'Duplicate waybills found'
-                                                                        :'No status information',
-                                                            lastStatusDate: t.TrackDetails[0].StatusDetail.CreationTime,
-                                                            lastLocation: t.TrackDetails[0].StatusDetail.Location,
-                                                            actualShipDate: shipDate,
+                                                                        : 'No status information',
+                                                            shipDate: shipDate,
                                                             reason: t.TrackDetails[0].StatusDetail.AncillaryDetails
                                                                     ? t.TrackDetails[0].StatusDetail.AncillaryDetails[0].ReasonDescription
                                                                     : 'No exception or no reason data',
                                                         }
-                                                        : {lastStatus: 'No status'})
+                                                        : t.DuplicateWaybill
+                                                        ? {lastStatus: 'Duplicate waybills found'}
+                                                        : {lastStatus: 'No status information'})
                                                 }
                                             }
                                             else {

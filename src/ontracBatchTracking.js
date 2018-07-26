@@ -2,7 +2,7 @@ const request = require('request-promise-native');
 const q = '%0D%0A';
 const Bottleneck = require('bottleneck');
 
-const limiter = new Bottleneck({minTime: 3000});
+const limiter = new Bottleneck({minTime: 3500});
 // limiter debugging messages
 // limiter.on('debug', function (message, data) {
 //     console.log(message);

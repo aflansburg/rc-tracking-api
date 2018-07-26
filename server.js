@@ -13,17 +13,21 @@ const bodyParser = require('body-parser');
 const data = require('./src/populateData');
 const scheduler = require('node-schedule');
 
-data.loadData();
+// run on save/start
+// data.loadData();
 
 let job = scheduler.scheduleJob('0 * * * *', function(){
-  data.loadData()
+  console.log('\nRunning hourly job\n');
+  data.loadData();
 });
 
+// drop off old records from db
 let pruneJob = scheduler.scheduleJob('30 7 * * *', function(){
   OrderShipmentCtrl.prune_records();
   TrackingCtrl.prune_records();
 });
 
+// drop off old records from db
 let pruneJob2 = scheduler.scheduleJob('0 23 * * *', function(){
   OrderShipmentCtrl.prune_records();
   TrackingCtrl.prune_records();

@@ -4,7 +4,7 @@ const endpoint = 'https://secure.shippingapis.com/ShippingAPI.dll?API=TrackV2&XM
 const parseResponse = require('xml2js').parseString;
 const Bottleneck = require('bottleneck');
 
-const limiter = new Bottleneck({minTime: 1750});
+const limiter = new Bottleneck({minTime: 2250});
 // limiter.on('debug', (message, data)=>{
 //     console.log(message);
 // })
@@ -68,10 +68,17 @@ const getUspsTracking = (trackingNumbers) => {
                             parseResponse(response, (err, res)=>{
                                 let tres = {}
                                 let trackInfo = [];
-                                if(err)
+                                if(err) {
                                     console.log(err);
+                                    console.log(`Error returned from USPS request - will retry:\n\t${err}`);
+                                    setTimeout(function(){ tryTrack(maxRetries - 1); }, 2000);
+                                }
+                                else if (!res.TrackResponse) {
+                                    console.log(`Error returned from USPS request - will retry:\n\t${err}`);
+                                    setTimeout(function(){ tryTrack(maxRetries - 1); }, 2000);
+                                }
                                 else {
-                                    if (res.TrackResponse.TrackInfo !== undefined){
+                                    if (res.TrackResponse !== undefined){
                                         res.TrackResponse.TrackInfo.forEach(tr=>{
                                             let shipData = {}
                                             if(tr.TrackSummary){

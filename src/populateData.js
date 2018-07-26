@@ -35,17 +35,15 @@ function loadData () {
                                         }
                                         data = flatten(data);
                                         data = data.filter(d=> d !== undefined);
-                                        // should work with all carriers? Maybe? Maybe Not??? need to ensure o is array (should be???)
                                         let fedexData = data.map(d=>{
                                             let record = {
                                                 trackingNum: d.trackingNum,
                                                 lastStatus: d.lastStatus,
-                                                lastStatusDate: d.lastStatusDate,
-                                                lastLocation: d.lastLocation,
-                                                shipDate: d.actualShipDate, // replacing actualShipDate
+                                                shipDate: d.shipDate, // replacing actualShipDate
                                                 reason: d.reason,
                                                 orderNum: '',
                                                 warehouse: '',
+                                                shipmentCreated: '',
                                             }
                                             o.forEach(t=>{
                                                 if (String(d.trackingNum) === String(t.U_PackTracking)){
@@ -56,7 +54,7 @@ function loadData () {
                                             })
                                             return record;
                                         })
-                                        trackingCtrl.update_many(fedexData)
+                                        trackingCtrl.update_many1(fedexData)
                                             .then(()=>{
                                                 console.log('Tracking collection updated.');
                                             })
@@ -81,17 +79,17 @@ function loadData () {
                                         data = data.filter(d=> d !== null);
                                         data.forEach(d=>{
                                             let record = {};
-                                            // some of this validation may be able to be removed
                                             if (d.reason){
                                                 // the status parser can probably be removed with usage of USPS TrackFieldRequest
                                                 // let statusData = parseUspsStatus(d.reason);
                                                 record = {
                                                     trackingNum: d.id,
                                                     lastStatus: d.reason,
-                                                    lastStatusDate: null, // for now
-                                                    lastLocation: null, // for now
                                                     reason: d.reason, // need to get reason only for exception ... **********
-                                                    shipDate: moment(d.shipDate, 'LL').format(),
+                                                    // shipDate: moment(d.shipDate, 'LL').format(),
+                                                    orderNum: '',
+                                                    warehouse: '',
+                                                    shipmentCreated: '',
                                                 }
                                             }
                                             else {
@@ -99,6 +97,10 @@ function loadData () {
                                                     trackingNum: d.id,
                                                     lastStatus: 'No data at this time',
                                                     reason: d.reason,
+                                                    // shipDate: '',
+                                                    orderNum: '',
+                                                    warehouse: '',
+                                                    shipmentCreated: '',
                                                 }
                                             }
                                             o.forEach(t=>{
@@ -109,9 +111,15 @@ function loadData () {
                                                 }
                                             })
                                             uspsData.push(record);
+                                            // this should get rid of any duplicates in the uspsData array
+                                            uspsData = uspsData.filter((u, index, self)=>{
+                                                return index === self.findIndex((t) =>{
+                                                    return t.trackingNum === u.trackingNum;
+                                                })
+                                            })
                                         })
                                         // update trackings collection after usps completes
-                                        trackingCtrl.update_many(uspsData)
+                                        trackingCtrl.update_many1(uspsData)
                                             .then(()=>{
                                                 console.log('Tracking collection updated.');
                                             })
@@ -141,7 +149,10 @@ function loadData () {
                                                     trackingNum: d.id,
                                                     lastStatus: d.lastStatus,
                                                     reason: d.reason,
-                                                    shipDate: d.shipDate
+                                                    shipDate: d.shipDate,
+                                                    orderNum: '',
+                                                    warehouse: '',
+                                                    shipmentCreated: '',
                                                 }
                                             }
                                             else {
@@ -149,7 +160,11 @@ function loadData () {
                                                     trackingNum: d.id,
                                                     lastStatus: 'No data at this time',
                                                     reason: d.reason, // check this
-                                                    shipDate: d.shipDate
+                                                    shipDate: d.shipDate,
+                                                    orderNum: '',
+                                                    warehouse: '',
+                                                    shipmentCreated: '',
+
                                                 }
                                             }
                                             o.forEach(t=>{
@@ -162,7 +177,7 @@ function loadData () {
                                             ontracData.push(record);
                                         })
                                         // update trackings collection after usps completes
-                                        trackingCtrl.update_many(ontracData)
+                                        trackingCtrl.update_many1(ontracData)
                                             .then(()=>{
                                                 console.log('Tracking collection updated.');
                                             })
