@@ -67,9 +67,16 @@ const getOntracTracking = (trackingNumbers) => {
                             let res = JSON.parse(response);
                             let trackInfo = [];
                             if (res === undefined || !res){
-                                console.log(`THIS REQUEST RETURNED NULL:\n\t${requestBody}`);
+                                console.log(`ONTRAC RESPONSE WAS NULL - Retrying:`);
+                                setTimeout(function(){ tryTrack(maxRetries - 1); }, 2000);
+                                return;
                             }
-                            if (res){
+                            else if (res.name === 'StatusCodeError'){
+                                console.log(`ONTRAC ERROR - Retrying:`);
+                                setTimeout(function(){ tryTrack(maxRetries - 1); }, 2000);
+                                return;
+                            }
+                            else if (res){
                                 res.forEach(tr=>{
                                     let shipDate = null;
                                     if (tr.ShippedDate){
