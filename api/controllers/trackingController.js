@@ -130,11 +130,8 @@ exports.delete_tracking = function(req, res){
 
 exports.prune_records = function(){
     let dateConstraint = new Date();
-    dateConstraint.setDate(dateConstraint.getDate()-5);
-    Tracking.deleteMany({"shipDate": {$lt: dateConstraint}}, function(){
+    dateConstraint.setDate(dateConstraint.getDate()-10);
+    Tracking.deleteMany({"shipmentCreated": {$lt: dateConstraint}}, function(){
         console.log('Old tracking records pruned by shipDate.')
-    });
-    Tracking.deleteMany({"lastStatusDate": {$lt: dateConstraint}}, function(){
-        console.log('Old tracking records pruned by lastStatusDate.')
     });
 }
