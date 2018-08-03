@@ -6,19 +6,25 @@ const mongoose = require('mongoose');
 // declared but unused just to register the schemas
 const Tracking = require('./api/models/trackingModel')
 const OrderShipment = require('./api/models/orderShipmentModel');
-
 const TrackingCtrl = require('./api/controllers/trackingController');
 const OrderShipmentCtrl = require('./api/controllers/orderShipmentController');
 const bodyParser = require('body-parser');
 const data = require('./src/populateData');
 const scheduler = require('node-schedule');
+const argparser = require('./src/argparsing').parser;
 
+const args = argparser.parseArgs();
+let ip = null;
+
+console.log(args);
 // run on save/start
-// data.loadData();
+if (args.server)
+  ip = args.server;
+args.run && data.loadData(ip);
 
 let job = scheduler.scheduleJob('0 * * * *', function(){
   console.log('\nRunning hourly job\n');
-  data.loadData();
+  data.loadData(ip);
 });
 
 // drop off old records from db
