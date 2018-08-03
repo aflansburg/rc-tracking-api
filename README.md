@@ -15,7 +15,17 @@ Side operations:
 
 Environment consists of:
 
-* MongoDB 3.6
+* MongoDB 4.0
 * Node 8.11.1 (LTS)
 
-No Open Source license has been assigned as this project is currently maintained by aflansburg@roughcountry.com and no decisions regarding licensing have been made.
+Required command line arg to set the SAP server address:
+
+* `-s --server` Usage: ```-s=192.168.1.8```
+
+Optional command line arg to run dataset refresh, fetch new information from carrier APIs:
+
+* `-r`
+
+Note that command line arguments have to be specified at run/build:
+
+* ```npm start -- -s=192.168.1.8 -r```

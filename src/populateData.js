@@ -9,9 +9,9 @@ const parseUspsStatus = require('./uspsStatus').parseStatus;
 const fs = require('fs');
 const moment = require('moment');
 
-function loadData () {
+function loadData (ip) {
 
-    getShipmentData()
+    getShipmentData(ip)
         .then(data=>{
             orderShipmentCtrl
                 .update_many(data)

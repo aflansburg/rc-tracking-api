@@ -1,5 +1,5 @@
 const sql = require('mssql');
-const config = {
+let config = {
     user: 'rcapi',
     password: 'RC@p1u$3r!',
     // server: 'horp-serv5.horpgroup.local',
@@ -12,7 +12,9 @@ const config = {
 
 const sqlQuery = `SELECT  [U_PackTracking],[ActDelDate],[SalesOrderNum],[PackageNum],[WhsCode]FROM [RC_Live_build].[dbo].[TrackingNumberStatus]WHERE [ActDelDate] >= DATEADD(day, -7, GETDATE())`;
 
-async function getShipmentData () {
+async function getShipmentData (ip) {
+    if (ip)
+        config.server = ip;
     const pool = new sql.ConnectionPool(config);
     pool.on('error', err => {
         // ... error handler 
