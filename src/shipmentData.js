@@ -2,7 +2,8 @@ const sql = require('mssql');
 const config = {
     user: 'rcapi',
     password: 'RC@p1u$3r!',
-    server: 'horp-serv5.horpgroup.local',
+    // server: 'horp-serv5.horpgroup.local',
+    server: '192.168.1.8',
     database: 'RC_Live_Build',
     pool: {
        idleTimeoutMillis: 10000,
