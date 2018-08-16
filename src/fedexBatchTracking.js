@@ -89,7 +89,7 @@ const makeRequestPromise = (req) => {
                             tryTrack(maxRetries);
                         }
                         catch (err){
-                            console.log(`Error making request to Fedex SOAP API:\n${err}`)
+                            console.log(`Error making request to Fedex SOAP API\n${err}`)
                         }
                         
                     })

@@ -71,7 +71,7 @@ const getOntracTracking = (trackingNumbers) => {
                                 setTimeout(function(){ tryTrack(maxRetries - 1); }, 2000);
                                 return;
                             }
-                            else if (res.name === 'StatusCodeError'){
+                            else if (res.StatusCodeError){
                                 console.log(`ONTRAC ERROR - Retrying:`);
                                 setTimeout(function(){ tryTrack(maxRetries - 1); }, 2000);
                                 return;
@@ -99,7 +99,9 @@ const getOntracTracking = (trackingNumbers) => {
                             }
                         })
                         .catch(err=>{
-                            console.log(err);
+                            console.log(`ONTRAC ERROR - Retrying:`);
+                            setTimeout(function(){ tryTrack(maxRetries - 1); }, 2000);
+                            return;
                         });
                     }
                     tryTrack(maxRetries);

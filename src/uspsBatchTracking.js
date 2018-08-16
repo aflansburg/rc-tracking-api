@@ -107,7 +107,9 @@ const getUspsTracking = (trackingNumbers) => {
                             })
                         })
                         .catch(err=>{
-                            console.log(err);
+                            console.log(`USPS ERROR - Retrying:`);
+                            setTimeout(function(){ tryTrack(maxRetries - 1); }, 2000);
+                            return;
                         });
                     }
                     tryTrack(maxRetries);
