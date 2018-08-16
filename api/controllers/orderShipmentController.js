@@ -66,7 +66,7 @@ exports.delete_record = function(req, res){
 
 exports.prune_records = function(){
     let dateConstraint = new Date();
-    dateConstraint.setDate(dateConstraint.getDate()-10);
+    dateConstraint.setDate(dateConstraint.getDate()-21);
     OrderShipment.deleteMany({"ActDelDate": {$lt: dateConstraint}}, function(){
         console.log('Old order shipment records pruned.')
     });

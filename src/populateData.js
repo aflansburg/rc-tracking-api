@@ -18,7 +18,7 @@ function loadData (ip) {
                     .then(()=>{
                         let dateConstraint = new Date();
                         // date constraint has to be > 1 or no data will be returned
-                        dateConstraint.setDate(dateConstraint.getDate()-15);
+                        dateConstraint.setDate(dateConstraint.getDate()-21);
                         orderShipmentCtrl.retrieve_records({"ActDelDate": {$gte: dateConstraint}})
                             .then(o=>{
                                 const tracking = o.map(i=>{
