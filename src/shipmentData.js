@@ -10,7 +10,7 @@ let config = {
     }
 }
 
-const sqlQuery = `SELECT  [U_PackTracking],[ActDelDate],[SalesOrderNum],[PackageNum],[WhsCode]FROM [RC_Live_build].[dbo].[TrackingNumberStatus]WHERE [ActDelDate] >= DATEADD(day, -7, GETDATE())`;
+const sqlQuery = `SELECT  [U_PackTracking],[ActDelDate],[SalesOrderNum],[PackageNum],[WhsCode]FROM [RC_Live_build].[dbo].[TrackingNumberStatus]WHERE [ActDelDate] >= DATEADD(day, -15, GETDATE())`;
 
 async function getShipmentData (ip) {
     if (ip)
