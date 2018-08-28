@@ -1,7 +1,7 @@
 {
-  "name": "fedex-api",
+  "name": "rc-tracking-api",
   "version": "1.0.0",
-  "description": "",
+  "description": "Rough  Country Tracking API Aggregator",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -15,6 +15,7 @@
   "dependencies": {
     "argparse": "^1.0.10",
     "array-flatten": "^2.1.1",
+    "async": "^2.6.1",
     "async-throttle": "^1.1.0",
     "body-parser": "^1.18.2",
     "bottleneck": "^2.4.0",

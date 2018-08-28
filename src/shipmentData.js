@@ -12,7 +12,9 @@ let config = {
 
 const sqlQuery = `SELECT  [U_PackTracking],[ActDelDate],[SalesOrderNum],[PackageNum],[WhsCode]FROM [RC_Live_build].[dbo].[TrackingNumberStatus]WHERE [ActDelDate] >= DATEADD(day, -21, GETDATE())`;
 
-async function getShipmentData (ip) {
+const maxRetries = 5;
+async function getShipmentData(ip, maxRetries) {
+    console.log('Starting connection to SAP:')
     if (ip)
         config.server = ip;
     const pool = new sql.ConnectionPool(config);
@@ -24,7 +26,14 @@ async function getShipmentData (ip) {
     try {
         await pool.connect();
         let result = await pool.request().query(sqlQuery);
-        return result.recordset;
+        if (result.recordset){
+            return result.recordset;
+        }
+        else{
+            console.log('Connection may have failed - retrying:');
+            setTimeout(function(){ getShipmentData(ip, maxRetries - 1); }, 2000);
+        }
+
     } catch (err) { 
         return err;
     } finally {

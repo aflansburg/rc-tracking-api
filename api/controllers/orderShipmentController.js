@@ -40,18 +40,24 @@ exports.update_many = function(req, res){
                     WhsCode: d._doc.WhsCode,
                 }
             })
+            
+            if (req.name !== 'ConnectionError'){
+                let sapItems = req;
     
-            let sapItems = req;
-    
-            let newItems = [];
-    
-            sapItems.forEach(s=>{
-                if(mongoItems.findIndex(i => i.U_PackTracking == s.U_PackTracking) < 0){
-                    newItems.push(s);
-                }
-            })
-            console.log(`Inserting ${newItems.length} new items from SAP.`);
-            resolve(OrderShipment.insertMany(newItems, {ordered: false}));
+                let newItems = [];
+        
+                sapItems.forEach(s=>{
+                    if(mongoItems.findIndex(i => i.U_PackTracking == s.U_PackTracking) < 0){
+                        newItems.push(s);
+                    }
+                })
+                console.log(`Inserting ${newItems.length} new items from SAP.`);
+                resolve(OrderShipment.insertMany(newItems, {ordered: false}));
+            }
+            else {
+                console.log('Data provided to insertMany was null');
+                resolve('Null provided to insertMany');
+            }
         })
     })
 }

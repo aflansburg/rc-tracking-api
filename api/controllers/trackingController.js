@@ -28,11 +28,12 @@ exports.create_many = function (req, res){
 } 
 
 exports.read_tracking = function(req, res){
-    Tracking.findById(req.params.trackingId, (err, tracking)=>{
-        res.json(tracking);
-    });
+    return Tracking.find({trackingNum: {$in: req}, lastStatus: {$not: /delivered/i}}).exec();
 }
 
+exports.get_all = function(req, res){
+    return Tracking.find({}).exec();
+}
 // this will now be relevant since SAP data is being stored and updated with fedexBatchTracking response props
 // exports.update_many = function(req, res){
 //     Tracking.updateMany({_id: req.params.trackingId}, req.body, {upsert: true}, (err, tracking)=>{
