@@ -4,7 +4,7 @@ const endpoint = 'https://secure.shippingapis.com/ShippingAPI.dll?API=TrackV2&XM
 const parseResponse = require('xml2js').parseString;
 const Bottleneck = require('bottleneck');
 
-const limiter = new Bottleneck({minTime: 2250});
+const limiter = new Bottleneck({minTime: 1500});
 // limiter.on('debug', (message, data)=>{
 //     console.log(message);
 // })
@@ -25,6 +25,7 @@ const chunkArray = (arr, chunk_size) =>{
 
 // * TODO * Need to implement the same tryTrack() recursive func from fedexBatchTracking
 async function uspsBatchTrack(trackingNumbers){
+    console.time('USPS-requests')
     trackingNumbers = trackingNumbers.filter(num => num.startsWith('9'));
     trackingNumbers = trackingNumbers.filter(num => num !== null)
     let promiseArray = [];

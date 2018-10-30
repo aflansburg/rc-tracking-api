@@ -1,14 +1,11 @@
 const getShipmentData = require('./shipmentData').getShipmentData;
 const getFedexTracking = require('./fedexBatchTracking').fedexBatchTrack;
 const getUspsTracking = require('./uspsBatchTracking').uspsBatchTrack;
+const getUpsTracking = require('./upsBatchTracking').upsBatchTrack;
 const getOntracTracking =  require('./ontracBatchTracking').ontrackBatchTrack;
 const trackingCtrl  = require('../api/controllers/trackingController');
 const orderShipmentCtrl  = require('../api/controllers/orderShipmentController');
 const flatten = require('array-flatten');
-const async = require('async');
-const parseUspsStatus = require('./uspsStatus').parseStatus;
-const fs = require('fs');
-const moment = require('moment');
 
 function loadData (ip) {
     getShipmentData(ip)
@@ -18,9 +15,17 @@ function loadData (ip) {
                     .then(()=>{
                         let dateConstraint = new Date();
                         // date constraint has to be > 1 or no data will be returned
-                        dateConstraint.setDate(dateConstraint.getDate()-21);
+                        dateConstraint.setDate(dateConstraint.getDate()-10);
                         orderShipmentCtrl.retrieve_records({"ActDelDate": {$gte: dateConstraint}})
                             .then(o=>{
+
+                                // hash table (mutable)
+                                const arrayToObject = (accum, item) => {
+                                    accum[item.U_PackTracking] = { ...item };
+                                    return accum;
+                                }
+                                const sapDataArr = o.reduce(arrayToObject, {});
+
                                 let tracking = o.map(i=>{
                                     if(i.U_PackTracking)
                                         return i.U_PackTracking
@@ -46,25 +51,31 @@ function loadData (ip) {
                                                 }
                                                 data = flatten(data);
                                                 data = data.filter(d=> d !== undefined);
-                                                let fedexData = data.map(d=>{
-                                                    let record = {
-                                                        trackingNum: d.trackingNum,
-                                                        lastStatus: d.lastStatus,
-                                                        shipDate: d.shipDate, // replacing actualShipDate
-                                                        reason: d.reason,
-                                                        orderNum: '',
-                                                        warehouse: '',
-                                                        shipmentCreated: '',
-                                                    }
-                                                    o.forEach(t=>{
-                                                        if (String(d.trackingNum) === String(t.U_PackTracking)){
-                                                            record.orderNum = t.SalesOrderNum;
-                                                            record.warehouse = t.WhsCode;
-                                                            record.shipmentCreated = t.ActDelDate;
+                                                let fedexData = [];
+                                                for (let i=0; i<data.length; i++){
+                                                    let record = {};
+                                                    if (data[i].reason){
+                                                        record = {
+                                                            trackingNum: data[i].id,
+                                                            lastStatus: data[i].reason,
+                                                            reason: data[i].reason,
+                                                            orderNum: sapDataArr[data[i].id]._doc.SalesOrderNum,
+                                                            warehouse: sapDataArr[data[i].id]._doc.WhsCode,
+                                                            shipmentCreated: sapDataArr[data[i].id]._doc.ActDelDate,
                                                         }
-                                                    })
-                                                    return record;
-                                                })
+                                                    }
+                                                    else {
+                                                        record = {
+                                                            trackingNum: data[i].id,
+                                                            lastStatus: 'No data at this time',
+                                                            reason: data[i].reason,
+                                                            orderNum: sapDataArr[data[i].id]._doc.SalesOrderNum,
+                                                            warehouse: sapDataArr[data[i].id]._doc.WhsCode,
+                                                            shipmentCreated: sapDataArr[data[i].id]._doc.ActDelDate,
+                                                        }
+                                                    }
+                                                    fedexData.push(record);
+                                                }
                                                 trackingCtrl.update_many1(fedexData)
                                                     .then(()=>{
                                                         console.log('Tracking collection updated.');
@@ -88,47 +99,37 @@ function loadData (ip) {
                                                 data = flatten(data);
                                                 data = data.filter(d=> d !== undefined);
                                                 data = data.filter(d=> d !== null);
-                                                data.forEach(d=>{
+
+                                                console.log('\nAll usps requests returned, processing results: \n');
+                                                for (let i=0; i<data.length; i++){
                                                     let record = {};
-                                                    if (d.reason){
-                                                        // the status parser can probably be removed with usage of USPS TrackFieldRequest
-                                                        // let statusData = parseUspsStatus(d.reason);
+                                                    if (data[i].reason){
                                                         record = {
-                                                            trackingNum: d.id,
-                                                            lastStatus: d.reason,
-                                                            reason: d.reason, // need to get reason only for exception ... **********
-                                                            // shipDate: moment(d.shipDate, 'LL').format(),
-                                                            orderNum: '',
-                                                            warehouse: '',
-                                                            shipmentCreated: '',
+                                                            trackingNum: data[i].id,
+                                                            lastStatus: data[i].reason,
+                                                            reason: data[i].reason,
+                                                            orderNum: sapDataArr[data[i].id]._doc.SalesOrderNum,
+                                                            warehouse: sapDataArr[data[i].id]._doc.WhsCode,
+                                                            shipmentCreated: sapDataArr[data[i].id]._doc.ActDelDate,
                                                         }
                                                     }
                                                     else {
                                                         record = {
-                                                            trackingNum: d.id,
+                                                            trackingNum: data[i].id,
                                                             lastStatus: 'No data at this time',
-                                                            reason: d.reason,
-                                                            // shipDate: '',
-                                                            orderNum: '',
-                                                            warehouse: '',
-                                                            shipmentCreated: '',
+                                                            reason: data[i].reason,
+                                                            orderNum: sapDataArr[data[i].id]._doc.SalesOrderNum,
+                                                            warehouse: sapDataArr[data[i].id]._doc.WhsCode,
+                                                            shipmentCreated: sapDataArr[data[i].id]._doc.ActDelDate,
                                                         }
                                                     }
-                                                    o.forEach(t=>{
-                                                        if (String(record.trackingNum) === String(t.U_PackTracking)){
-                                                            record.orderNum = t.SalesOrderNum;
-                                                            record.warehouse = t.WhsCode;
-                                                            record.shipmentCreated = t.ActDelDate;
-                                                        }
-                                                    })
                                                     uspsData.push(record);
-                                                    // this should get rid of any duplicates in the uspsData array
-                                                    uspsData = uspsData.filter((u, index, self)=>{
-                                                        return index === self.findIndex((t) =>{
-                                                            return t.trackingNum === u.trackingNum;
-                                                        })
+                                                }
+                                                uspsData = uspsData.filter((u, index, self)=>{
+                                                    return index === self.findIndex((t) =>{
+                                                        return t.trackingNum === u.trackingNum;
                                                     })
-                                                })
+                                                });
                                                 // update trackings collection after usps completes
                                                 trackingCtrl.update_many1(uspsData)
                                                     .then(()=>{
@@ -142,6 +143,60 @@ function loadData (ip) {
                                             .catch(err=>{
                                                 console.log(`Some error in getUspsTracking in populateData:\n\t${err}`)
                                             })
+                                        getUpsTracking(filteredTracking)
+                                        .then(data=>{
+                                            let upsData = [];
+                                            if (!Array.isArray(data)){
+                                                return {
+                                                    error: 'invalid data returned',
+                                                }
+                                            }
+                                            data = flatten(data);
+                                            data = data.filter(d=> d !== undefined);
+                                            data = data.filter(d=> d !== null);
+
+                                            for (let i=0; i<data.length; i++){
+                                                let record = {};
+                                                if (data[i].reason){
+                                                    record = {
+                                                        trackingNum: data[i].id,
+                                                        lastStatus: data[i].reason,
+                                                        reason: data[i].reason,
+                                                        orderNum: sapDataArr[data[i].id]._doc.SalesOrderNum,
+                                                        warehouse: sapDataArr[data[i].id]._doc.WhsCode,
+                                                        shipmentCreated: sapDataArr[data[i].id]._doc.ActDelDate,
+                                                    }
+                                                }
+                                                else {
+                                                    record = {
+                                                        trackingNum: data[i].id,
+                                                        lastStatus: 'No data at this time',
+                                                        reason: data[i].reason,
+                                                        orderNum: sapDataArr[data[i].id]._doc.SalesOrderNum,
+                                                        warehouse: sapDataArr[data[i].id]._doc.WhsCode,
+                                                        shipmentCreated: sapDataArr[data[i].id]._doc.ActDelDate,
+                                                    }
+                                                }
+                                                upsData.push(record);
+                                            }
+                                            // this should get rid of any duplicates in the uspsData array
+                                            upsData = upsData.filter((u, index, self)=>{
+                                                return index === self.findIndex((t) =>{
+                                                    return t.trackingNum === u.trackingNum;
+                                                });
+                                            });
+                                            // update trackings collection after usps completes
+                                            trackingCtrl.update_many1(upsData)
+                                                .then(()=>{
+                                                })
+                                                .catch (err=>{
+                                                    console.log(`error writing during update_many:\n\t${err}`);
+                                                });
+                                                console.log('\nAll UPS requests completed');
+                                        })
+                                        .catch(err=>{
+                                            console.log(`Some error in getUspsTracking in populateData:\n\t${err}`)
+                                        });
                                         getOntracTracking(filteredTracking)
                                             .then(data=>{
                                                 let ontracData = [];
@@ -153,41 +208,31 @@ function loadData (ip) {
                                                 data = flatten(data);
                                                 data = data.filter(d=> d !== undefined);
                                                 data = data.filter(d=> d !== null);
-                                                data.forEach(d=>{
+                                                console.log('\nAll ontrac requests returned, processing results: \n');
+                                                for (let i=0; i<data.length; i++){
                                                     let record = {};
-                                                    if (d.reason){
+                                                    if (data[i].reason){
                                                         record = {
-                                                            trackingNum: d.id,
-                                                            lastStatus: d.lastStatus,
-                                                            reason: d.reason,
-                                                            shipDate: d.shipDate,
-                                                            orderNum: '',
-                                                            warehouse: '',
-                                                            shipmentCreated: '',
+                                                            trackingNum: data[i].id,
+                                                            lastStatus: data[i].lastStatus,
+                                                            reason: data[i].reason,
+                                                            orderNum: sapDataArr[data[i].id]._doc.SalesOrderNum,
+                                                            warehouse: sapDataArr[data[i].id]._doc.WhsCode,
+                                                            shipmentCreated: sapDataArr[data[i].id]._doc.ActDelDate,
                                                         }
                                                     }
                                                     else {
                                                         record = {
-                                                            trackingNum: d.id,
+                                                            trackingNum: data[i].id,
                                                             lastStatus: 'No data at this time',
-                                                            reason: d.reason, // check this
-                                                            shipDate: d.shipDate,
-                                                            orderNum: '',
-                                                            warehouse: '',
-                                                            shipmentCreated: '',
-
+                                                            reason: data[i].reason,
+                                                            orderNum: sapDataArr[data[i].id]._doc.SalesOrderNum,
+                                                            warehouse: sapDataArr[data[i].id]._doc.WhsCode,
+                                                            shipmentCreated: sapDataArr[data[i].id]._doc.ActDelDate,
                                                         }
                                                     }
-                                                    o.forEach(t=>{
-                                                        if (String(record.trackingNum) === String(t.U_PackTracking)){
-                                                            record.orderNum = t.SalesOrderNum;
-                                                            record.warehouse = t.WhsCode;
-                                                            record.shipmentCreated = t.ActDelDate;
-                                                        }
-                                                    })
                                                     ontracData.push(record);
-                                                })
-                                                // update trackings collection after usps completes
+                                                }
                                                 trackingCtrl.update_many1(ontracData)
                                                     .then(()=>{
                                                         console.log('Tracking collection updated.');

@@ -23,6 +23,8 @@ exports.create_many = function (req, res){
 
 exports.read_record = function(req, res){
     OrderShipment.findById(req.U_PackTracking, (err, orderShipment)=>{
+        if (err)
+            console.log(`orderShipmentController.read_record error: ${err}`);
         res.json(orderShipment);
     });
 }
@@ -63,7 +65,7 @@ exports.update_many = function(req, res){
 }
 
 exports.delete_record = function(req, res){
-    OrderShipment.remove({
+    OrderShipment.deleteOne({
         _id: req.params.U_PackTracking
     }, function(err, orderShipment){
         res.json({message: "OrderShipment record successfully deleted."});

@@ -145,7 +145,7 @@ async function fedexBatchTrack(trackingNumbers){
             promiseArray.push(makeRequestPromise(request));
         })
     }
-    else {
+    else if (tracking.length === 1){
         console.log(`There will be 1 call to the Fedex Tracking API.`);
 
         const selDetails = tracking.map(trckNo => {
@@ -176,6 +176,9 @@ async function fedexBatchTrack(trackingNumbers){
             SelectionDetails: selDetails,
         }
         promiseArray.push(makeRequestPromise(request));
+    }
+    else {
+        console.log(`There will be 0 calls to the Fedex Tracking API.`);
     }
     return await Promise.all(promiseArray);
 }

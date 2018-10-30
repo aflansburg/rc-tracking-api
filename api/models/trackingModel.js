@@ -5,26 +5,11 @@ const Schema = mongoose.Schema;
 const TrackingSchema = new Schema({
     trackingNum: {
         type: String,
-        index: { unique: true }
+        // index: { unique: true }
     },
     orderNum: {
         type: String,
     },
-    // shipDate: {
-    //     type: Date,
-    // },
-    // actualShipDate: {
-    //     type: Date,
-    // },
-    lastStatus: {
-        type:  String,
-    },
-    // lastStatusDate: {
-    //     type: Date,
-    // },
-    // lastLocation: {
-    //     type: Object,
-    // },
     reason: {
         type: String,
     },
