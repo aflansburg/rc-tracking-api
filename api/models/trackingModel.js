@@ -10,6 +10,9 @@ const TrackingSchema = new Schema({
     orderNum: {
         type: String,
     },
+    lastStatus: {	
+        type:  String,	
+    },
     reason: {
         type: String,
     },
