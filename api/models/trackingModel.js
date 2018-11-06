@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 const TrackingSchema = new Schema({
     trackingNum: {
         type: String,
-        // index: { unique: true }
+        index: { unique: true }
     },
     orderNum: {
         type: String,

@@ -40,7 +40,7 @@ let pruneJob2 = scheduler.scheduleJob('0 23 * * *', function(){
 });
 
 mongoose.Promise = global.Promise;
-mongoose.connect('mongodb://localhost/Trackingdb', { useNewUrlParser: true});
+mongoose.connect('mongodb://127.0.0.1/Trackingdb', { useNewUrlParser: true});
 mongoose.set('useCreateIndex', true);
 mongoose.set('useFindAndModify', false);
 

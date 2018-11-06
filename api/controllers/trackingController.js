@@ -8,11 +8,17 @@ exports.retrieve_tracking = function(req, res){
     ip = ip[0] === ':' ? ip.substr(7): ip;
     // **LOG** info level log event
     console.log(`Request from IP ${ip} for tracking data.`);
-    Tracking.find({}, (err, tracking)=>{
-        res.json(tracking);
-        // **LOG** info level log event
-        console.log(`Response returned to IP ${ip}.`);
-    });
+    Tracking.find()
+            .lean()
+            .exec(function(err, tracking){
+                res.json(tracking);
+            })
+    // Tracking.find({}, (err, tracking)=>{
+    //     res.json(tracking);
+    //     // **LOG** info level log event
+    //     console.timeEnd('find-all-query');
+    //     console.log(`Response returned to IP ${ip}.`);
+    // });
 }
 
 exports.create_tracking = function(req, res){
